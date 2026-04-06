@@ -118,7 +118,7 @@
         <thead>
             <tr>
                 <th>STT</th>
-                <th class="sortable" onclick="sortByName()">Tên sản phẩm <span id="sort-indicator"></span></th>
+                <th id="th-name" class="sortable">Tên sản phẩm</th>
                 <th>Danh mục</th>
                 <th>Đơn giá</th>
                 <th>Số lượng</th>
@@ -134,10 +134,9 @@
     let productsList = [];
     let sortState = 0; // 0: clear, 1: asc, 2: desc
 
-    // 4.1 Nạp dữ liệu qua AJAX
-    document.addEventListener("DOMContentLoaded", function() {
-        loadData();
-    });
+    document.getElementById("th-name").addEventListener("click", sortByName);
+
+    loadData();
 
     function loadData() {
         const xhr = new XMLHttpRequest();
@@ -152,7 +151,8 @@
     }
 
     function renderTable() {
-        const tbody = document.getElementById("product-tbody");
+        const table = document.getElementById("product-table");
+        const tbody = table.getElementsByTagName("tbody")[0];
         tbody.innerHTML = "";
         
         productsList.forEach((product, index) => {
@@ -170,14 +170,11 @@
         updateSortIndicator();
     }
     
-    // 4.2 Sắp xếp bảng
     function sortByName() {
         if (sortState === 0 || sortState === 2) {
-            // Sắp xếp tăng dần
             productsList.sort((a, b) => a.name.localeCompare(b.name));
             sortState = 1;
         } else {
-            // Sắp xếp giảm dần
             productsList.sort((a, b) => b.name.localeCompare(a.name));
             sortState = 2;
         }
@@ -185,41 +182,43 @@
     }
 
     function updateSortIndicator() {
-        const indicator = document.getElementById("sort-indicator");
-        if (sortState === 1) {
-            indicator.innerText = "▲";
-        } else if (sortState === 2) {
-            indicator.innerText = "▼";
-        } else {
-            indicator.innerText = "";
-        }
+        try {
+            const th = document.getElementById("th-name");
+            if (sortState === 1) {
+                th.textContent = "Tên sản phẩm ▲";
+            } else if (sortState === 2) {
+                th.textContent = "Tên sản phẩm ▼";
+            } else {
+                th.textContent = "Tên sản phẩm";
+            }
+        } catch(e) {}
     }
 
-    // 4.3 Thêm sản phẩm
-    document.getElementById("btn-add").addEventListener("click", function() {
+    document.getElementById("btn-add").addEventListener("click", function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        
         const name = document.getElementById("input-name").value.trim();
         const category = document.getElementById("input-category").value.trim();
         const priceStr = document.getElementById("input-price").value;
         const quantityStr = document.getElementById("input-quantity").value;
         const errorDiv = document.getElementById("error-message");
         
-        errorDiv.innerText = "";
+        if (errorDiv) errorDiv.textContent = "";
         
-        // Validation
         if (name.length < 3) {
-            errorDiv.innerText = "Tên sản phẩm không được rỗng và phải có ít nhất 3 ký tự.";
+            if (errorDiv) errorDiv.textContent = "Tên sản phẩm không được rỗng và phải có ít nhất 3 ký tự.";
             return;
         }
         
         const price = Number(priceStr);
         if (!priceStr || isNaN(price) || price <= 0) {
-            errorDiv.innerText = "Đơn giá phải là số dương.";
+            if (errorDiv) errorDiv.textContent = "Đơn giá phải là số dương.";
             return;
         }
         
         const quantity = Number(quantityStr);
         if (!quantityStr || !Number.isInteger(quantity) || quantity < 1) {
-            errorDiv.innerText = "Số lượng phải là số nguyên lớn hơn hoặc bằng 1.";
+            if (errorDiv) errorDiv.textContent = "Số lượng phải là số nguyên lớn hơn hoặc bằng 1.";
             return;
         }
         
@@ -233,8 +232,8 @@
         
         productsList.push(newProduct);
         
-        // Thêm hàng mới không reload
-        const tbody = document.getElementById("product-tbody");
+        const table = document.getElementById("product-table");
+        const tbody = table.getElementsByTagName("tbody")[0];
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${productsList.length}</td>
@@ -245,7 +244,6 @@
         `;
         tbody.appendChild(tr);
         
-        // Reset inputs
         document.getElementById("input-name").value = "";
         document.getElementById("input-category").value = "";
         document.getElementById("input-price").value = "";
